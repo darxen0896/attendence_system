@@ -55,6 +55,9 @@ export async function ensureDatabaseAndTables(): Promise<void> {
   if (initPromise) return initPromise;
 
   initPromise = (async () => {
+    const config = getDbConfig();
+    let rootConn: mysql.Connection | null = null;
+    try {
       const isRemote = config.host !== "127.0.0.1" && config.host !== "localhost";
       const sslConfig = isRemote ? { minVersion: "TLSv1.2", rejectUnauthorized: true } : undefined;
 
@@ -120,6 +123,7 @@ const globalForDb = globalThis as typeof globalThis & {
   __mysqlPool?: ReturnType<typeof mysql.createPool>;
 };
 
+const config = getDbConfig();
 const isRemote = config.host !== "127.0.0.1" && config.host !== "localhost";
 
 export const pool =
