@@ -99,6 +99,34 @@ export async function ensureDatabaseAndTables(): Promise<void> {
         );
       `);
 
+      // 5. Create users table if not exists
+      await rootConn.query(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) NOT NULL UNIQUE,
+          password VARCHAR(255) NOT NULL,
+          role VARCHAR(50) NOT NULL DEFAULT 'admin',
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        );
+      `);
+
+      // 6. Seed default admin if users table is empty
+      const [existingUsers]: any = await rootConn.query("SELECT id FROM users LIMIT 1;");
+      if (!existingUsers || existingUsers.length === 0) {
+        await rootConn.query(
+          "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?);",
+          [
+            "Mandal Admin",
+            "admin@myyuvakmandal.org",
+            "$2b$10$VY3ebtQZlTCrf3dRkqsnN.R.LRs2LUDnD3b2u1yxUpz0Qj1O0Z042",
+            "admin",
+          ]
+        );
+        console.log("[Database] Seeded initial admin account: admin@myyuvakmandal.org");
+      }
+
       isInitialized = true;
       console.log(`[Database] Database '${config.database}' and tables verified successfully.`);
     } catch (err: any) {
